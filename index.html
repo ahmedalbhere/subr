@@ -9,69 +9,70 @@
 </head>
 <body>
     <div class="container">
-        <!-- شريط التنقل العلوي -->
-        <nav class="main-nav">
-            <button class="nav-btn active" data-page="sales">نظام البيع</button>
-            <button class="nav-btn" data-page="products">إدارة المنتجات</button>
-        </nav>
-
-        <!-- صفحة المبيعات الرئيسية -->
-        <div id="sales-page" class="page active-page">
-            <div class="sales-header">
-                <h1>نظام كاشير السوبر ماركت</h1>
-                <div class="scanner-status" id="scanner-status">الماسح متوقف</div>
+        <!-- شريط التحكم العلوي -->
+        <div class="control-bar">
+            <div class="scanner-controls">
+                <button id="toggle-scanner" class="control-btn">
+                    <span class="icon">📷</span>
+                    <span>تشغيل الماسح</span>
+                </button>
+                <button id="toggle-light" class="control-btn">
+                    <span class="icon">💡</span>
+                    <span>تشغيل المصباح</span>
+                </button>
             </div>
+            <div class="system-status">
+                <span id="scanner-status" class="status-off">الماسح: متوقف</span>
+                <span id="light-status" class="status-off">المصباح: مغلق</span>
+            </div>
+        </div>
 
+        <!-- منطقة الماسح الضوئي -->
+        <div id="scanner-area">
             <div id="scanner-container">
                 <div id="interactive" class="viewport"></div>
                 <div class="scanner-overlay">
-                    <div class="scan-guide"></div>
+                    <div class="scan-line"></div>
                     <p class="scan-instruction">وجه الكاميرا نحو الباركود للمسح</p>
                 </div>
             </div>
+            <div class="light-indicator" id="light-indicator"></div>
+        </div>
 
-            <div class="scanner-controls">
-                <button id="start-scanner" class="scan-button">تشغيل الماسح</button>
-                <button id="stop-scanner" class="scan-button" disabled>إيقاف الماسح</button>
-            </div>
-
+        <!-- صفحة المبيعات -->
+        <div id="sales-page" class="page active-page">
             <div class="invoice-section">
-                <h2>الفواتير</h2>
+                <h2>فاتورة البيع الحالية</h2>
                 <div class="invoice-header">
-                    <span class="item-name">المنتج</span>
-                    <span class="item-price">السعر</span>
-                    <span class="item-qty">الكمية</span>
-                    <span class="item-total">المجموع</span>
+                    <span class="col-product">المنتج</span>
+                    <span class="col-price">السعر</span>
+                    <span class="col-qty">الكمية</span>
+                    <span class="col-total">المجموع</span>
                 </div>
-                <div id="invoice-items"></div>
-                <div class="invoice-total">
-                    <span class="total-label">الإجمالي:</span>
-                    <span id="total-amount" class="total-amount">0.00</span>
+                <div id="invoice-items" class="invoice-items">
+                    <div class="empty-message">لا توجد عناصر في الفاتورة</div>
                 </div>
-                <div class="invoice-actions">
-                    <button id="complete-sale" class="action-button">إتمام البيع</button>
-                    <button id="cancel-sale" class="action-button cancel">إلغاء الفاتورة</button>
+                <div class="invoice-footer">
+                    <div class="total-amount">
+                        <span>المجموع الكلي:</span>
+                        <span id="total-amount">0.00 ر.س</span>
+                    </div>
+                    <div class="invoice-actions">
+                        <button id="complete-sale" class="btn-primary">إتمام البيع</button>
+                        <button id="clear-sale" class="btn-secondary">مسح الفاتورة</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- صفحة إدارة المنتجات -->
-        <div id="products-page" class="page">
-            <div class="products-header">
-                <h1>إدارة المنتجات</h1>
-                <button id="add-product" class="add-product-btn">+ إضافة منتج جديد</button>
-            </div>
-
-            <div class="search-container">
-                <input type="text" id="product-search" placeholder="ابحث عن منتج...">
-            </div>
-
-            <div id="products-list" class="products-list"></div>
-
-            <!-- نموذج إضافة منتج جديد -->
-            <div id="product-form" class="modal" style="display:none;">
-                <div class="modal-content">
-                    <h2 id="product-form-title">إضافة منتج جديد</h2>
+        <!-- نافذة إضافة منتج جديد -->
+        <div id="add-product-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>إضافة منتج جديد</h3>
+                    <button id="close-modal" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
                     <div class="form-group">
                         <label for="product-barcode">باركود المنتج:</label>
                         <input type="text" id="product-barcode" class="form-input" readonly>
@@ -81,13 +82,13 @@
                         <input type="text" id="product-name" class="form-input" placeholder="أدخل اسم المنتج">
                     </div>
                     <div class="form-group">
-                        <label for="product-price">السعر:</label>
-                        <input type="number" id="product-price" class="form-input" placeholder="أدخل السعر" step="0.01">
+                        <label for="product-price">سعر المنتج:</label>
+                        <input type="number" id="product-price" class="form-input" placeholder="أدخل السعر" step="0.01" min="0">
                     </div>
-                    <div class="form-actions">
-                        <button id="save-product" class="form-button primary">حفظ المنتج</button>
-                        <button id="cancel-product" class="form-button">إلغاء</button>
-                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="save-product" class="btn-primary">حفظ المنتج</button>
+                    <button id="cancel-product" class="btn-secondary">إلغاء</button>
                 </div>
             </div>
         </div>
