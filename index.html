@@ -11,76 +11,82 @@
     <div class="container">
         <!-- شريط التنقل العلوي -->
         <nav class="main-nav">
-            <button class="nav-btn active" data-page="sales">المبيعات</button>
+            <button class="nav-btn active" data-page="sales">نظام البيع</button>
             <button class="nav-btn" data-page="products">إدارة المنتجات</button>
         </nav>
 
         <!-- صفحة المبيعات الرئيسية -->
         <div id="sales-page" class="page active-page">
             <div class="sales-header">
-                <h1>نقطة البيع</h1>
-                <div class="scanner-controls">
-                    <button id="start-scanner">تشغيل الماسح الضوئي</button>
-                    <button id="stop-scanner">إيقاف الماسح</button>
-                </div>
+                <h1>نظام كاشير السوبر ماركت</h1>
+                <div class="scanner-status" id="scanner-status">الماسح متوقف</div>
             </div>
 
             <div id="scanner-container">
                 <div id="interactive" class="viewport"></div>
                 <div class="scanner-overlay">
-                    <div class="scan-line"></div>
-                    <p>وجه الكاميرا نحو الباركود للمسح</p>
+                    <div class="scan-guide"></div>
+                    <p class="scan-instruction">وجه الكاميرا نحو الباركود للمسح</p>
                 </div>
             </div>
 
+            <div class="scanner-controls">
+                <button id="start-scanner" class="scan-button">تشغيل الماسح</button>
+                <button id="stop-scanner" class="scan-button" disabled>إيقاف الماسح</button>
+            </div>
+
             <div class="invoice-section">
+                <h2>الفواتير</h2>
                 <div class="invoice-header">
-                    <span>المنتج</span>
-                    <span>السعر</span>
-                    <span>الكمية</span>
-                    <span>المجموع</span>
+                    <span class="item-name">المنتج</span>
+                    <span class="item-price">السعر</span>
+                    <span class="item-qty">الكمية</span>
+                    <span class="item-total">المجموع</span>
                 </div>
                 <div id="invoice-items"></div>
                 <div class="invoice-total">
-                    <span>الإجمالي:</span>
-                    <span id="total-amount">0.00</span>
+                    <span class="total-label">الإجمالي:</span>
+                    <span id="total-amount" class="total-amount">0.00</span>
                 </div>
-                <button id="complete-sale">إتمام البيع</button>
-                <button id="cancel-sale">إلغاء</button>
+                <div class="invoice-actions">
+                    <button id="complete-sale" class="action-button">إتمام البيع</button>
+                    <button id="cancel-sale" class="action-button cancel">إلغاء الفاتورة</button>
+                </div>
             </div>
         </div>
 
         <!-- صفحة إدارة المنتجات -->
         <div id="products-page" class="page">
-            <h1>إدارة المنتجات</h1>
-            
-            <div class="products-actions">
-                <input type="text" id="product-search" placeholder="بحث بالاسم أو الباركود">
-                <button id="add-product">إضافة منتج جديد</button>
+            <div class="products-header">
+                <h1>إدارة المنتجات</h1>
+                <button id="add-product" class="add-product-btn">+ إضافة منتج جديد</button>
             </div>
 
-            <div id="products-list"></div>
+            <div class="search-container">
+                <input type="text" id="product-search" placeholder="ابحث عن منتج...">
+            </div>
 
-            <!-- نموذج إضافة/تعديل منتج -->
+            <div id="products-list" class="products-list"></div>
+
+            <!-- نموذج إضافة منتج جديد -->
             <div id="product-form" class="modal" style="display:none;">
                 <div class="modal-content">
                     <h2 id="product-form-title">إضافة منتج جديد</h2>
                     <div class="form-group">
                         <label for="product-barcode">باركود المنتج:</label>
-                        <input type="text" id="product-barcode" readonly>
-                        <button id="scan-barcode">مسح الباركود</button>
+                        <input type="text" id="product-barcode" class="form-input" readonly>
                     </div>
                     <div class="form-group">
                         <label for="product-name">اسم المنتج:</label>
-                        <input type="text" id="product-name">
+                        <input type="text" id="product-name" class="form-input" placeholder="أدخل اسم المنتج">
                     </div>
                     <div class="form-group">
                         <label for="product-price">السعر:</label>
-                        <input type="number" id="product-price" step="0.01">
+                        <input type="number" id="product-price" class="form-input" placeholder="أدخل السعر" step="0.01">
                     </div>
-                    <div class="form-buttons">
-                        <button id="save-product">حفظ</button>
-                        <button id="cancel-product">إلغاء</button>
+                    <div class="form-actions">
+                        <button id="save-product" class="form-button primary">حفظ المنتج</button>
+                        <button id="cancel-product" class="form-button">إلغاء</button>
                     </div>
                 </div>
             </div>
