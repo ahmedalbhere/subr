@@ -1,345 +1,55 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // متغيرات النظام
+    // متغيرات التطبيق
     let products = JSON.parse(localStorage.getItem('products')) || {};
     let sales = JSON.parse(localStorage.getItem('sales')) || [];
-    let invoiceItems = [];
-    let scannerActive = false;
-    let currentInvoiceId = localStorage.getItem('currentInvoiceId')) || 1;
-    
+    let currentInvoice = {
+        items: [],
+        total: 0
+    };
+    let currentProductId = null;
+
     // عناصر DOM
-    const scannerContainer = document.getElementById('interactive');
-    const startScannerBtn = document.getElementById('start-scanner');
-    const stopScannerBtn = document.getElementById('stop-scanner');
-    const manualBarcodeInput = document.getElementById('manual-barcode');
-    const addManualBtn = document.getElementById('add-manual');
-    const invoiceItemsContainer = document.getElementById('invoice-items');
-    const totalAmountSpan = document.getElementById('total-amount');
-    const printInvoiceBtn = document.getElementById('print-invoice');
-    const clearInvoiceBtn = document.getElementById('clear-invoice');
-    const newProductForm = document.getElementById('new-product-form');
-    const barcodeInput = document.getElementById('barcode');
-    const productNameInput = document.getElementById('product-name');
-    const productPriceInput = document.getElementById('product-price');
-    const saveProductBtn = document.getElementById('save-product');
-    const searchProductInput = document.getElementById('search-product');
-    const productListContainer = document.getElementById('product-list');
     const navButtons = document.querySelectorAll('.nav-btn');
     const pages = document.querySelectorAll('.page');
-    const salesPage = document.getElementById('sales-page');
-    const managementPage = document.getElementById('management-page');
-    const reportsPage = document.getElementById('reports-page');
-    const reportTitle = document.getElementById('report-title');
-    const reportContent = document.getElementById('report-content');
-    const salesDateInput = document.getElementById('sales-date');
-    const filterSalesBtn = document.getElementById('filter-sales');
-    const resetFiltersBtn = document.getElementById('reset-filters');
-    const salesList = document.getElementById('sales-list');
-    const printReportBtn = document.getElementById('print-report');
-    const exportReportBtn = document.getElementById('export-report');
+    const barcodeInput = document.getElementById('barcode-input');
+    const addItemBtn = document.getElementById('add-item');
+    const invoiceItemsContainer = document.getElementById('invoice-items');
+    const totalAmountSpan = document.getElementById('total-amount');
+    const completeSaleBtn = document.getElementById('complete-sale');
+    const cancelSaleBtn = document.getElementById('cancel-sale');
+    const productSearch = document.getElementById('product-search');
+    const addProductBtn = document.getElementById('add-product');
+    const productsList = document.getElementById('products-list');
+    const productForm = document.getElementById('product-form');
+    const productFormTitle = document.getElementById('product-form-title');
+    const productBarcode = document.getElementById('product-barcode');
+    const productName = document.getElementById('product-name');
+    const productPrice = document.getElementById('product-price');
+    const saveProductBtn = document.getElementById('save-product');
+    const cancelProductBtn = document.getElementById('cancel-product');
+    const reportType = document.getElementById('report-type');
+    const reportDate = document.getElementById('report-date');
+    const generateReportBtn = document.getElementById('generate-report');
+    const reportSummary = document.getElementById('report-summary');
+    const reportDetails = document.getElementById('report-details');
+    const currentTimeElement = document.getElementById('current-time');
 
-    // تهيئة تاريخ اليوم كقيمة افتراضية
-    salesDateInput.valueAsDate = new Date();
-    
-    // تهيئة الماسح الضوئي
-    function initScanner() {
-        Quagga.init({
-            inputStream: {
-                name: "Live",
-                type: "LiveStream",
-                target: scannerContainer,
-                constraints: {
-                    width: 480,
-                    height: 320,
-                    facingMode: "environment"
-                },
-            },
-            decoder: {
-                readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader", "code_39_vin_reader", "codabar_reader", "upc_reader", "upc_e_reader"]
-            },
-        }, function(err) {
-            if (err) {
-                console.error(err);
-                alert("حدث خطأ في تهيئة الماسح الضوئي: " + err);
-                return;
-            }
-            Quagga.start();
-            scannerActive = true;
-        });
-        
-        Quagga.onDetected(function(result) {
-            const code = result.codeResult.code;
-            processBarcode(code);
+    // تحديث الوقت الحالي
+    function updateCurrentTime() {
+        const now = new Date();
+        currentTimeElement.textContent = now.toLocaleString('ar-EG', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
     }
-    
-    // معالجة الباركود
-    function processBarcode(barcode) {
-        if (products[barcode]) {
-            addToInvoice(products[barcode]);
-        } else {
-            Quagga.stop();
-            scannerActive = false;
-            barcodeInput.value = barcode;
-            newProductForm.style.display = 'block';
-            productNameInput.focus();
-        }
-    }
-    
-    // إضافة عنصر إلى الفاتورة
-    function addToInvoice(product) {
-        const existingItem = invoiceItems.find(item => item.barcode === product.barcode);
-        
-        if (existingItem) {
-            existingItem.quantity += 1;
-        } else {
-            invoiceItems.push({
-                barcode: product.barcode,
-                name: product.name,
-                price: product.price,
-                quantity: 1
-            });
-        }
-        
-        updateInvoiceDisplay();
-    }
-    
-    // تحديث عرض الفاتورة
-    function updateInvoiceDisplay() {
-        invoiceItemsContainer.innerHTML = '';
-        let total = 0;
-        
-        invoiceItems.forEach((item, index) => {
-            const itemTotal = item.price * item.quantity;
-            total += itemTotal;
-            
-            const itemElement = document.createElement('div');
-            itemElement.className = 'invoice-item';
-            itemElement.innerHTML = `
-                <span>${item.name}</span>
-                <span>${item.price.toFixed(2)}</span>
-                <span>${item.quantity}</span>
-                <span>${itemTotal.toFixed(2)}</span>
-                <span><button class="delete-item" data-index="${index}">حذف</button></span>
-            `;
-            
-            invoiceItemsContainer.appendChild(itemElement);
-        });
-        
-        totalAmountSpan.textContent = total.toFixed(2);
-        
-        document.querySelectorAll('.delete-item').forEach(button => {
-            button.addEventListener('click', function() {
-                const index = parseInt(this.getAttribute('data-index'));
-                invoiceItems.splice(index, 1);
-                updateInvoiceDisplay();
-            });
-        });
-    }
-    
-    // حفظ الفاتورة
-    function saveInvoice() {
-        if (invoiceItems.length === 0) return;
-        
-        const total = invoiceItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        
-        const sale = {
-            id: currentInvoiceId++,
-            date: new Date().toISOString().split('T')[0],
-            time: new Date().toLocaleTimeString(),
-            items: invoiceItems,
-            total: total
-        };
-        
-        sales.push(sale);
-        localStorage.setItem('sales', JSON.stringify(sales));
-        localStorage.setItem('currentInvoiceId', currentInvoiceId);
-        
-        invoiceItems = [];
-        updateInvoiceDisplay();
-        
-        return sale;
-    }
-    
-    // حفظ المنتج
-    function saveProduct() {
-        const barcode = barcodeInput.value;
-        const name = productNameInput.value.trim();
-        const price = parseFloat(productPriceInput.value);
-        
-        if (!name || isNaN(price)) {
-            alert('الرجاء إدخال اسم المنتج وسعر صحيح');
-            return;
-        }
-        
-        products[barcode] = {
-            barcode: barcode,
-            name: name,
-            price: price
-        };
-        
-        localStorage.setItem('products', JSON.stringify(products));
-        newProductForm.style.display = 'none';
-        productNameInput.value = '';
-        productPriceInput.value = '';
-        
-        addToInvoice(products[barcode]);
-        updateProductList();
-        
-        if (!scannerActive) {
-            initScanner();
-        }
-    }
-    
-    // تحديث قائمة المنتجات
-    function updateProductList(filter = '') {
-        productListContainer.innerHTML = '';
-        
-        const filteredProducts = Object.values(products).filter(product => 
-            product.name.toLowerCase().includes(filter.toLowerCase()) || 
-            product.barcode.includes(filter)
-        );
-        
-        if (filteredProducts.length === 0) {
-            productListContainer.innerHTML = '<p>لا توجد منتجات متطابقة</p>';
-            return;
-        }
-        
-        filteredProducts.forEach(product => {
-            const productElement = document.createElement('div');
-            productElement.className = 'product-item';
-            productElement.innerHTML = `
-                <div>
-                    <strong>${product.name}</strong><br>
-                    <small>باركود: ${product.barcode}</small>
-                </div>
-                <div>${product.price.toFixed(2)}</div>
-                <div class="product-actions">
-                    <button class="edit-btn" data-barcode="${product.barcode}">تعديل</button>
-                    <button class="delete-btn" data-barcode="${product.barcode}">حذف</button>
-                </div>
-            `;
-            
-            productListContainer.appendChild(productElement);
-        });
-        
-        document.querySelectorAll('.edit-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const barcode = this.getAttribute('data-barcode');
-                editProduct(barcode);
-            });
-        });
-        
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const barcode = this.getAttribute('data-barcode');
-                deleteProduct(barcode);
-            });
-        });
-    }
-    
-    // تعديل المنتج
-    function editProduct(barcode) {
-        const product = products[barcode];
-        if (!product) return;
-        
-        if (scannerActive) {
-            Quagga.stop();
-            scannerActive = false;
-        }
-        
-        barcodeInput.value = product.barcode;
-        productNameInput.value = product.name;
-        productPriceInput.value = product.price;
-        newProductForm.style.display = 'block';
-        productNameInput.focus();
-    }
-    
-    // حذف المنتج
-    function deleteProduct(barcode) {
-        if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-            delete products[barcode];
-            localStorage.setItem('products', JSON.stringify(products));
-            updateProductList(searchProductInput.value);
-        }
-    }
-    
-    // طباعة الفاتورة
-    function printInvoice() {
-        if (invoiceItems.length === 0) {
-            alert('لا توجد عناصر في الفاتورة');
-            return;
-        }
-        
-        const sale = saveInvoice();
-        
-        const printWindow = window.open('', '_blank');
-        let invoiceHTML = `
-            <!DOCTYPE html>
-            <html lang="ar" dir="rtl">
-            <head>
-                <meta charset="UTF-8">
-                <title>فاتورة بيع #${sale.id}</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    h1 { text-align: center; margin-bottom: 20px; }
-                    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-                    th { background-color: #f2f2f2; }
-                    .total { font-weight: bold; text-align: left; }
-                    .date { text-align: left; margin-bottom: 20px; }
-                    .header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <div>فاتورة رقم: #${sale.id}</div>
-                    <div>التاريخ: ${sale.date} - ${sale.time}</div>
-                </div>
-                <h1>فاتورة بيع</h1>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>المنتج</th>
-                            <th>السعر</th>
-                            <th>الكمية</th>
-                            <th>المجموع</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-        
-        let total = 0;
-        sale.items.forEach(item => {
-            const itemTotal = item.price * item.quantity;
-            total += itemTotal;
-            
-            invoiceHTML += `
-                <tr>
-                    <td>${item.name}</td>
-                    <td>${item.price.toFixed(2)}</td>
-                    <td>${item.quantity}</td>
-                    <td>${itemTotal.toFixed(2)}</td>
-                </tr>
-            `;
-        });
-        
-        invoiceHTML += `
-                    </tbody>
-                </table>
-                <div class="total">الإجمالي: ${total.toFixed(2)}</div>
-                <div style="margin-top: 30px; text-align: center; padding-top: 20px; border-top: 1px dashed #000;">
-                    شكراً لزيارتكم<br>
-                    ${new Date().getFullYear()} © جميع الحقوق محفوظة
-                </div>
-            </body>
-            </html>
-        `;
-        
-        printWindow.document.write(invoiceHTML);
-        printWindow.document.close();
-        printWindow.print();
-    }
-    
+
+    setInterval(updateCurrentTime, 1000);
+    updateCurrentTime();
+
     // تغيير الصفحات
     function changePage(pageId) {
         pages.forEach(page => {
@@ -348,329 +58,359 @@ document.addEventListener('DOMContentLoaded', function() {
                 page.classList.add('active-page');
             }
         });
-        
+
         navButtons.forEach(btn => {
             btn.classList.remove('active');
             if (btn.getAttribute('data-page') === pageId) {
                 btn.classList.add('active');
             }
         });
-    }
-    
-    // معالجة التقارير
-    function generateReport(type) {
-        let title = '';
-        let reportData = [];
-        const today = new Date();
-        
-        switch(type) {
-            case 'daily':
-                title = 'تقرير المبيعات اليومي - ' + today.toLocaleDateString();
-                reportData = sales.filter(sale => sale.date === today.toISOString().split('T')[0]);
-                break;
-            case 'weekly':
-                title = 'تقرير المبيعات الأسبوعي - الأسبوع ' + getWeekNumber(today);
-                const weekStart = new Date(today);
-                weekStart.setDate(today.getDate() - today.getDay());
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekStart.getDate() + 6);
-                
-                reportData = sales.filter(sale => {
-                    const saleDate = new Date(sale.date);
-                    return saleDate >= weekStart && saleDate <= weekEnd;
-                });
-                break;
-            case 'monthly':
-                title = 'تقرير المبيعات الشهري - ' + today.toLocaleDateString('ar', {month: 'long', year: 'numeric'});
-                const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-                const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                
-                reportData = sales.filter(sale => {
-                    const saleDate = new Date(sale.date);
-                    return saleDate >= monthStart && saleDate <= monthEnd;
-                });
-                break;
+
+        // إعادة التركيز على حقل الباركود عند العودة لصفحة المبيعات
+        if (pageId === 'sales') {
+            barcodeInput.focus();
         }
-        
-        reportTitle.textContent = title;
-        displayReport(reportData, type);
-        changePage('reports');
     }
-    
-    // عرض التقرير
-    function displayReport(data, type) {
-        if (data.length === 0) {
-            reportContent.innerHTML = '<p>لا توجد بيانات متاحة</p>';
-            return;
-        }
-        
-        let totalAmount = 0;
-        let totalItems = 0;
-        
-        let html = `
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>رقم الفاتورة</th>
-                        <th>التاريخ</th>
-                        <th>عدد العناصر</th>
-                        <th>المبلغ</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-        
-        data.forEach(sale => {
-            const itemsCount = sale.items.reduce((sum, item) => sum + item.quantity, 0);
-            totalAmount += sale.total;
-            totalItems += itemsCount;
-            
-            html += `
-                <tr>
-                    <td>${sale.id}</td>
-                    <td>${sale.date} ${sale.time}</td>
-                    <td>${itemsCount}</td>
-                    <td>${sale.total.toFixed(2)}</td>
-                </tr>
-            `;
-        });
-        
-        html += `
-                </tbody>
-            </table>
-            <div class="report-summary">
-                <p>عدد الفواتير: ${data.length}</p>
-                <p>إجمالي المبيعات: ${totalAmount.toFixed(2)}</p>
-                <p>إجمالي العناصر المباعة: ${totalItems}</p>
-                <p>متوسط قيمة الفاتورة: ${(totalAmount / data.length).toFixed(2)}</p>
-            </div>
-        `;
-        
-        if (type === 'monthly') {
-            const dailySales = {};
-            data.forEach(sale => {
-                if (!dailySales[sale.date]) {
-                    dailySales[sale.date] = 0;
-                }
-                dailySales[sale.date] += sale.total;
-            });
-            
-            html += `<h3>تحليل المبيعات اليومية</h3><table class="report-table"><thead><tr><th>اليوم</th><th>المبلغ</th></tr></thead><tbody>`;
-            
-            Object.entries(dailySales).forEach(([date, amount]) => {
-                html += `<tr><td>${date}</td><td>${amount.toFixed(2)}</td></tr>`;
-            });
-            
-            html += `</tbody></table>`;
-        }
-        
-        reportContent.innerHTML = html;
-    }
-    
-    // عرض إدارة المبيعات
-    function loadSalesManagement() {
-        displaySales(sales);
-    }
-    
-    // عرض المبيعات
-    function displaySales(data) {
-        if (data.length === 0) {
-            salesList.innerHTML = '<p>لا توجد مبيعات مسجلة</p>';
-            return;
-        }
-        
-        salesList.innerHTML = '';
-        
-        data.forEach(sale => {
-            const itemsCount = sale.items.reduce((sum, item) => sum + item.quantity, 0);
-            
-            const saleElement = document.createElement('div');
-            saleElement.className = 'sale-item';
-            saleElement.innerHTML = `
-                <div>فاتورة #${sale.id}</div>
-                <div>${sale.date} - ${sale.time}</div>
-                <div>${itemsCount} عنصر</div>
-                <div>${sale.total.toFixed(2)}</div>
-                <div>
-                    <button class="view-sale" data-id="${sale.id}">عرض</button>
-                </div>
-            `;
-            
-            salesList.appendChild(saleElement);
-        });
-        
-        document.querySelectorAll('.view-sale').forEach(button => {
-            button.addEventListener('click', function() {
-                const saleId = parseInt(this.getAttribute('data-id'));
-                viewSaleDetails(saleId);
-            });
-        });
-    }
-    
-    // عرض تفاصيل الفاتورة
-    function viewSaleDetails(saleId) {
-        const sale = sales.find(s => s.id === saleId);
-        if (!sale) return;
-        
-        let html = `
-            <h2>تفاصيل الفاتورة #${sale.id}</h2>
-            <p>التاريخ: ${sale.date} - ${sale.time}</p>
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>المنتج</th>
-                        <th>السعر</th>
-                        <th>الكمية</th>
-                        <th>المجموع</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-        
-        sale.items.forEach(item => {
-            html += `
-                <tr>
-                    <td>${item.name}</td>
-                    <td>${item.price.toFixed(2)}</td>
-                    <td>${item.quantity}</td>
-                    <td>${(item.price * item.quantity).toFixed(2)}</td>
-                </tr>
-            `;
-        });
-        
-        html += `
-                </tbody>
-            </table>
-            <div class="report-summary">
-                <p>الإجمالي: ${sale.total.toFixed(2)}</p>
-            </div>
-            <button onclick="window.history.back()">العودة</button>
-        `;
-        
-        const detailsWindow = window.open('', '_blank');
-        detailsWindow.document.write(`
-            <!DOCTYPE html>
-            <html lang="ar" dir="rtl">
-            <head>
-                <meta charset="UTF-8">
-                <title>تفاصيل الفاتورة #${sale.id}</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-                    th { background-color: #f2f2f2; }
-                    .report-summary { margin-top: 20px; padding: 15px; background-color: #f0f0f0; border-radius: 5px; font-weight: bold; }
-                    button { padding: 10px 15px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
-                </style>
-            </head>
-            <body>
-                ${html}
-            </body>
-            </html>
-        `);
-        detailsWindow.document.close();
-    }
-    
-    // تصفية المبيعات حسب التاريخ
-    function filterSalesByDate() {
-        const selectedDate = salesDateInput.value;
-        if (!selectedDate) return;
-        
-        const filteredSales = sales.filter(sale => sale.date === selectedDate);
-        displaySales(filteredSales);
-    }
-    
-    // دالة مساعدة لحساب رقم الأسبوع
-    function getWeekNumber(date) {
-        const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-        const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
-        return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-    }
-    
-    // تصدير التقرير إلى Excel
-    function exportToExcel() {
-        alert('سيتم تصدير التقرير كملف Excel');
-    }
-    
-    // معالجات الأحداث
-    startScannerBtn.addEventListener('click', function() {
-        if (!scannerActive) {
-            initScanner();
-        }
-    });
-    
-    stopScannerBtn.addEventListener('click', function() {
-        if (scannerActive) {
-            Quagga.stop();
-            scannerActive = false;
-        }
-    });
-    
-    manualBarcodeInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            const barcode = manualBarcodeInput.value.trim();
-            if (barcode) {
-                processBarcode(barcode);
-                manualBarcodeInput.value = '';
-            }
-        }
-    });
-    
-    addManualBtn.addEventListener('click', function() {
-        const barcode = manualBarcodeInput.value.trim();
-        if (barcode) {
-            processBarcode(barcode);
-            manualBarcodeInput.value = '';
-        }
-    });
-    
-    printInvoiceBtn.addEventListener('click', printInvoice);
-    
-    clearInvoiceBtn.addEventListener('click', function() {
-        invoiceItems = [];
-        updateInvoiceDisplay();
-    });
-    
-    saveProductBtn.addEventListener('click', saveProduct);
-    
-    searchProductInput.addEventListener('input', function() {
-        updateProductList(this.value);
-    });
-    
+
     navButtons.forEach(button => {
         button.addEventListener('click', function() {
             const pageId = this.getAttribute('data-page');
-            if (pageId) {
-                changePage(pageId);
-                
-                if (pageId === 'management') {
-                    loadSalesManagement();
-                }
+            changePage(pageId);
+
+            if (pageId === 'products') {
+                renderProductsList();
+            } else if (pageId === 'reports') {
+                reportDate.valueAsDate = new Date();
             }
         });
     });
-    
-    document.querySelectorAll('.dropdown-content a').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const reportType = this.getAttribute('data-report');
-            generateReport(reportType);
+
+    // إدارة الفاتورة
+    function addItemToInvoice(barcode) {
+        if (!products[barcode]) {
+            alert('المنتج غير موجود، الرجاء إضافته أولاً من صفحة إدارة المنتجات');
+            return;
+        }
+
+        const existingItem = currentInvoice.items.find(item => item.barcode === barcode);
+        const product = products[barcode];
+
+        if (existingItem) {
+            existingItem.quantity += 1;
+            existingItem.total = existingItem.quantity * product.price;
+        } else {
+            currentInvoice.items.push({
+                barcode: barcode,
+                name: product.name,
+                price: product.price,
+                quantity: 1,
+                total: product.price
+            });
+        }
+
+        updateInvoiceTotal();
+        renderInvoiceItems();
+        barcodeInput.value = '';
+        barcodeInput.focus();
+    }
+
+    function updateInvoiceTotal() {
+        currentInvoice.total = currentInvoice.items.reduce((sum, item) => sum + item.total, 0);
+        totalAmountSpan.textContent = currentInvoice.total.toFixed(2);
+    }
+
+    function renderInvoiceItems() {
+        invoiceItemsContainer.innerHTML = '';
+
+        currentInvoice.items.forEach((item, index) => {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'invoice-item';
+            itemElement.innerHTML = `
+                <span>${item.name}</span>
+                <span>${item.price.toFixed(2)}</span>
+                <span>${item.quantity}</span>
+                <span>${item.total.toFixed(2)}</span>
+            `;
+            invoiceItemsContainer.appendChild(itemElement);
         });
+    }
+
+    function completeSale() {
+        if (currentInvoice.items.length === 0) {
+            alert('لا توجد عناصر في الفاتورة');
+            return;
+        }
+
+        const sale = {
+            id: sales.length + 1,
+            date: new Date().toISOString().split('T')[0],
+            time: new Date().toLocaleTimeString(),
+            items: [...currentInvoice.items],
+            total: currentInvoice.total
+        };
+
+        sales.push(sale);
+        localStorage.setItem('sales', JSON.stringify(sales));
+
+        currentInvoice = {
+            items: [],
+            total: 0
+        };
+
+        updateInvoiceTotal();
+        renderInvoiceItems();
+        alert('تم حفظ الفاتورة بنجاح');
+    }
+
+    function cancelSale() {
+        if (confirm('هل أنت متأكد من إلغاء الفاتورة الحالية؟')) {
+            currentInvoice = {
+                items: [],
+                total: 0
+            };
+
+            updateInvoiceTotal();
+            renderInvoiceItems();
+        }
+    }
+
+    // إدارة المنتجات
+    function renderProductsList(filter = '') {
+        productsList.innerHTML = '';
+
+        const filteredProducts = Object.values(products).filter(product => 
+            product.name.toLowerCase().includes(filter.toLowerCase()) || 
+            product.barcode.includes(filter)
+        );
+
+        if (filteredProducts.length === 0) {
+            productsList.innerHTML = '<div class="product-item" style="justify-content: center;">لا توجد منتجات</div>';
+            return;
+        }
+
+        filteredProducts.forEach(product => {
+            const productElement = document.createElement('div');
+            productElement.className = 'product-item';
+            productElement.innerHTML = `
+                <div class="product-info">
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-barcode">${product.barcode}</div>
+                </div>
+                <div class="product-price">${product.price.toFixed(2)}</div>
+                <div class="product-actions">
+                    <button class="edit-btn" data-barcode="${product.barcode}">تعديل</button>
+                    <button class="delete-btn" data-barcode="${product.barcode}">حذف</button>
+                </div>
+            `;
+            productsList.appendChild(productElement);
+        });
+
+        // إضافة معالجات الأحداث لأزرار التعديل والحذف
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const barcode = this.getAttribute('data-barcode');
+                editProduct(barcode);
+            });
+        });
+
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const barcode = this.getAttribute('data-barcode');
+                deleteProduct(barcode);
+            });
+        });
+    }
+
+    function showProductForm(barcode = '', name = '', price = '') {
+        if (barcode) {
+            productFormTitle.textContent = 'تعديل المنتج';
+            currentProductId = barcode;
+        } else {
+            productFormTitle.textContent = 'إضافة منتج جديد';
+            currentProductId = null;
+        }
+
+        productBarcode.value = barcode;
+        productName.value = name;
+        productPrice.value = price;
+        productForm.style.display = 'flex';
+        productName.focus();
+    }
+
+    function saveProduct() {
+        const barcode = productBarcode.value.trim();
+        const name = productName.value.trim();
+        const price = parseFloat(productPrice.value);
+
+        if (!barcode || !name || isNaN(price)) {
+            alert('الرجاء إدخال جميع البيانات بشكل صحيح');
+            return;
+        }
+
+        // إذا كان منتج جديد أو تم تغيير الباركود
+        if (!currentProductId || currentProductId !== barcode) {
+            if (products[barcode]) {
+                alert('هذا الباركود موجود بالفعل');
+                return;
+            }
+
+            // إذا كان تعديلاً ولم يتم تغيير الباركود، احذف القديم
+            if (currentProductId) {
+                delete products[currentProductId];
+            }
+        }
+
+        products[barcode] = {
+            barcode: barcode,
+            name: name,
+            price: price
+        };
+
+        localStorage.setItem('products', JSON.stringify(products));
+        productForm.style.display = 'none';
+        renderProductsList(productSearch.value);
+    }
+
+    function editProduct(barcode) {
+        const product = products[barcode];
+        if (product) {
+            showProductForm(product.barcode, product.name, product.price);
+        }
+    }
+
+    function deleteProduct(barcode) {
+        if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+            delete products[barcode];
+            localStorage.setItem('products', JSON.stringify(products));
+            renderProductsList(productSearch.value);
+        }
+    }
+
+    // إدارة التقارير
+    function generateReport() {
+        const type = reportType.value;
+        const date = new Date(reportDate.value);
+        
+        let filteredSales = [];
+        let title = '';
+        let period = '';
+
+        if (type === 'daily') {
+            const dateStr = date.toISOString().split('T')[0];
+            filteredSales = sales.filter(sale => sale.date === dateStr);
+            title = 'تقرير يومي';
+            period = date.toLocaleDateString('ar-EG');
+        } else if (type === 'weekly') {
+            const weekStart = new Date(date);
+            weekStart.setDate(date.getDate() - date.getDay());
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            
+            filteredSales = sales.filter(sale => {
+                const saleDate = new Date(sale.date);
+                return saleDate >= weekStart && saleDate <= weekEnd;
+            });
+            
+            title = 'تقرير أسبوعي';
+            period = `من ${weekStart.toLocaleDateString('ar-EG')} إلى ${weekEnd.toLocaleDateString('ar-EG')}`;
+        } else if (type === 'monthly') {
+            const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+            const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+            
+            filteredSales = sales.filter(sale => {
+                const saleDate = new Date(sale.date);
+                return saleDate >= monthStart && saleDate <= monthEnd;
+            });
+            
+            title = 'تقرير شهري';
+            period = date.toLocaleDateString('ar-EG', {month: 'long', year: 'numeric'});
+        }
+
+        displayReport(title, period, filteredSales);
+    }
+
+    function displayReport(title, period, salesData) {
+        const totalSales = salesData.reduce((sum, sale) => sum + sale.total, 0);
+        const totalItems = salesData.reduce((sum, sale) => 
+            sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
+        
+        reportSummary.innerHTML = `
+            <h3>${title}</h3>
+            <p>الفترة: ${period}</p>
+            <p>عدد الفواتير: ${salesData.length}</p>
+            <p>إجمالي المبيعات: ${totalSales.toFixed(2)}</p>
+            <p>عدد العناصر المباعة: ${totalItems}</p>
+        `;
+
+        reportDetails.innerHTML = '';
+        
+        if (salesData.length === 0) {
+            reportDetails.innerHTML = '<p>لا توجد بيانات للعرض</p>';
+            return;
+        }
+
+        const headerRow = document.createElement('div');
+        headerRow.className = 'report-row header';
+        headerRow.innerHTML = `
+            <div class="report-cell">رقم الفاتورة</div>
+            <div class="report-cell">التاريخ</div>
+            <div class="report-cell">عدد العناصر</div>
+            <div class="report-cell">المبلغ</div>
+        `;
+        reportDetails.appendChild(headerRow);
+
+        salesData.forEach(sale => {
+            const itemsCount = sale.items.reduce((sum, item) => sum + item.quantity, 0);
+            
+            const row = document.createElement('div');
+            row.className = 'report-row';
+            row.innerHTML = `
+                <div class="report-cell">${sale.id}</div>
+                <div class="report-cell">${sale.date}</div>
+                <div class="report-cell">${itemsCount}</div>
+                <div class="report-cell">${sale.total.toFixed(2)}</div>
+            `;
+            reportDetails.appendChild(row);
+        });
+    }
+
+    // معالجات الأحداث
+    barcodeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const barcode = barcodeInput.value.trim();
+            if (barcode) {
+                addItemToInvoice(barcode);
+            }
+        }
     });
-    
-    filterSalesBtn.addEventListener('click', filterSalesByDate);
-    
-    resetFiltersBtn.addEventListener('click', function() {
-        salesDateInput.valueAsDate = new Date();
-        loadSalesManagement();
+
+    addItemBtn.addEventListener('click', function() {
+        const barcode = barcodeInput.value.trim();
+        if (barcode) {
+            addItemToInvoice(barcode);
+        }
     });
-    
-    printReportBtn.addEventListener('click', function() {
-        window.print();
+
+    completeSaleBtn.addEventListener('click', completeSale);
+    cancelSaleBtn.addEventListener('click', cancelSale);
+
+    productSearch.addEventListener('input', function() {
+        renderProductsList(this.value);
     });
-    
-    exportReportBtn.addEventListener('click', exportToExcel);
-    
-    // تهيئة النظام
-    updateProductList();
+
+    addProductBtn.addEventListener('click', function() {
+        showProductForm();
+    });
+
+    saveProductBtn.addEventListener('click', saveProduct);
+
+    cancelProductBtn.addEventListener('click', function() {
+        productForm.style.display = 'none';
+    });
+
+    generateReportBtn.addEventListener('click', generateReport);
+
+    // تهيئة التطبيق
+    renderProductsList();
+    barcodeInput.focus();
 });
