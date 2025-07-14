@@ -1,12 +1,16 @@
+/* الخطوط */
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+
+/* الأساسيات */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Tajawal', sans-serif;
 }
 
 body {
-    background-color: #f5f5f5;
+    background-color: #f5f7fa;
     padding: 20px;
     direction: rtl;
 }
@@ -14,9 +18,9 @@ body {
 .container {
     max-width: 1000px;
     margin: 0 auto;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     overflow: hidden;
 }
 
@@ -30,12 +34,13 @@ body {
 .nav-btn {
     flex: 1;
     background-color: transparent;
-    color: white;
+    color: #ecf0f1;
     border: none;
-    padding: 15px;
-    font-size: 16px;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
     border-bottom: 3px solid transparent;
 }
 
@@ -51,70 +56,149 @@ body {
 /* الصفحات */
 .page {
     display: none;
-    padding: 20px;
+    padding: 25px;
 }
 
 .page.active-page {
     display: block;
 }
 
+h1, h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: 700;
+}
+
 /* صفحة المبيعات */
 .sales-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
+    margin-bottom: 25px;
+    text-align: center;
 }
 
-.current-time {
-    font-size: 16px;
-    color: #7f8c8d;
-}
-
-.barcode-section {
-    display: flex;
-    margin-bottom: 20px;
-    gap: 10px;
-}
-
-#barcode-input {
-    flex: 1;
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-#add-item {
-    padding: 0 20px;
-    background-color: #3498db;
+.scanner-status {
+    background-color: #e74c3c;
     color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+    padding: 8px 15px;
+    border-radius: 20px;
+    display: inline-block;
     font-size: 16px;
+    margin-top: 10px;
 }
 
-.invoice-section {
-    border: 1px solid #eee;
-    border-radius: 5px;
+.scanner-status.active {
+    background-color: #2ecc71;
+}
+
+#scanner-container {
+    position: relative;
+    width: 100%;
+    height: 350px;
+    margin: 0 auto 25px;
+    border: 2px dashed #bdc3c7;
+    border-radius: 10px;
     overflow: hidden;
+    background-color: #f1f3f4;
+}
+
+.viewport {
+    width: 100%;
+    height: 100%;
+}
+
+.scanner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.scan-guide {
+    width: 80%;
+    height: 3px;
+    background-color: rgba(231, 76, 60, 0.8);
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+    animation: scan 2s infinite linear;
+    margin-bottom: 20px;
+}
+
+.scan-instruction {
+    color: #2c3e50;
+    font-size: 18px;
+    font-weight: 500;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 8px 16px;
+    border-radius: 20px;
+}
+
+@keyframes scan {
+    0% { transform: translateY(-150px); }
+    100% { transform: translateY(150px); }
+}
+
+.scanner-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.scan-button {
+    padding: 12px 25px;
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.scan-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#start-scanner {
+    background-color: #2ecc71;
+    color: white;
+}
+
+#stop-scanner {
+    background-color: #e74c3c;
+    color: white;
+}
+
+/* الفاتورة */
+.invoice-section {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
 }
 
 .invoice-header {
     display: flex;
-    background-color: #f8f9fa;
-    padding: 10px;
-    font-weight: bold;
-    border-bottom: 1px solid #eee;
+    padding: 12px 10px;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 10px;
 }
 
 .invoice-header span {
     flex: 1;
     text-align: center;
 }
+
+.item-name { flex: 3 !important; text-align: right !important; }
+.item-price, .item-qty, .item-total { flex: 1 !important; }
 
 #invoice-items {
     max-height: 300px;
@@ -123,9 +207,10 @@ body {
 
 .invoice-item {
     display: flex;
-    padding: 10px;
-    border-bottom: 1px solid #eee;
+    padding: 12px 10px;
+    border-bottom: 1px solid #e9ecef;
     align-items: center;
+    font-size: 16px;
 }
 
 .invoice-item span {
@@ -136,24 +221,46 @@ body {
 .invoice-total {
     display: flex;
     justify-content: space-between;
-    padding: 15px;
-    background-color: #f8f9fa;
-    font-weight: bold;
+    padding: 15px 10px;
+    margin-top: 15px;
+    background-color: #e9ecef;
+    border-radius: 6px;
+    font-weight: 700;
     font-size: 18px;
 }
 
-#complete-sale, #cancel-sale {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
+.total-label {
+    color: #2c3e50;
+}
+
+.total-amount {
+    color: #27ae60;
+}
+
+.invoice-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.action-button {
+    flex: 1;
+    padding: 14px;
     font-size: 16px;
+    font-weight: 500;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 #complete-sale {
-    background-color: #2ecc71;
+    background-color: #27ae60;
     color: white;
 }
 
@@ -163,39 +270,62 @@ body {
 }
 
 /* صفحة المنتجات */
-.products-actions {
+.products-header {
     display: flex;
-    gap: 10px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.add-product-btn {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.add-product-btn:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-container {
     margin-bottom: 20px;
 }
 
 #product-search {
-    flex: 1;
-    padding: 10px;
+    width: 100%;
+    padding: 12px 15px;
     border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: all 0.2s;
 }
 
-#add-product {
-    padding: 10px 15px;
-    background-color: #3498db;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+#product-search:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
 }
 
-#products-list {
-    border: 1px solid #eee;
-    border-radius: 5px;
+.products-list {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
     overflow: hidden;
 }
 
 .product-item {
     display: flex;
-    padding: 10px;
-    border-bottom: 1px solid #eee;
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
     align-items: center;
+    transition: all 0.2s;
 }
 
 .product-item:hover {
@@ -207,25 +337,37 @@ body {
 }
 
 .product-name {
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 18px;
     margin-bottom: 5px;
+    color: #2c3e50;
 }
 
-.product-barcode, .product-price {
+.product-barcode {
     color: #7f8c8d;
     font-size: 14px;
 }
 
+.product-price {
+    font-weight: 600;
+    font-size: 18px;
+    color: #27ae60;
+    margin: 0 20px;
+}
+
 .product-actions {
     display: flex;
-    gap: 5px;
+    gap: 10px;
 }
 
 .edit-btn, .delete-btn {
-    padding: 5px 10px;
+    padding: 8px 15px;
     border: none;
-    border-radius: 3px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
+    transition: all 0.2s;
 }
 
 .edit-btn {
@@ -238,7 +380,12 @@ body {
     color: white;
 }
 
-/* نافذة المنتج */
+.edit-btn:hover, .delete-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* نافذة إضافة منتج */
 .modal {
     position: fixed;
     top: 0;
@@ -250,109 +397,107 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+}
+
+.modal.show {
+    opacity: 1;
+    visibility: visible;
 }
 
 .modal-content {
     background-color: white;
-    padding: 20px;
-    border-radius: 5px;
-    width: 400px;
+    padding: 25px;
+    border-radius: 10px;
+    width: 450px;
     max-width: 90%;
+    transform: translateY(20px);
+    transition: all 0.3s;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal.show .modal-content {
+    transform: translateY(0);
+}
+
+#product-form-title {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-size: 22px;
 }
 
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #2c3e50;
+    font-size: 16px;
 }
 
-.form-group input {
+.form-input {
     width: 100%;
-    padding: 8px;
+    padding: 12px 15px;
     border: 1px solid #ddd;
-    border-radius: 3px;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: all 0.2s;
 }
 
-.form-buttons {
+.form-input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+.form-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
+    gap: 15px;
+    margin-top: 25px;
 }
 
-.form-buttons button {
-    padding: 8px 15px;
+.form-button {
+    padding: 12px 25px;
+    font-size: 16px;
+    font-weight: 500;
     border: none;
-    border-radius: 3px;
+    border-radius: 6px;
     cursor: pointer;
+    transition: all 0.2s;
 }
 
-#save-product {
-    background-color: #2ecc71;
+.form-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-button.primary {
+    background-color: #27ae60;
     color: white;
 }
 
-#cancel-product {
+.form-button.cancel {
     background-color: #95a5a6;
     color: white;
 }
 
-/* صفحة التقارير */
-.report-filters {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-#report-type, #report-date {
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-}
-
-#generate-report {
-    padding: 8px 15px;
-    background-color: #3498db;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-}
-
-.report-summary {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-}
-
-.report-details {
-    border: 1px solid #eee;
-    border-radius: 5px;
-    overflow: hidden;
-}
-
-.report-row {
-    display: flex;
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-}
-
-.report-row.header {
-    background-color: #f8f9fa;
-    font-weight: bold;
-}
-
-.report-cell {
-    flex: 1;
-    text-align: center;
-}
-
+/* التكيف مع الشاشات الصغيرة */
 @media (max-width: 768px) {
+    .container {
+        padding: 0;
+        border-radius: 0;
+    }
+    
+    .page {
+        padding: 15px;
+    }
+    
     .main-nav {
         flex-direction: column;
     }
@@ -361,11 +506,45 @@ body {
         width: 100%;
     }
     
-    .barcode-section, .products-actions, .report-filters {
+    #scanner-container {
+        height: 280px;
+    }
+    
+    .scanner-controls, .invoice-actions {
         flex-direction: column;
     }
     
-    #barcode-input, #product-search, #report-type, #report-date {
+    .action-button, .scan-button {
         width: 100%;
+    }
+    
+    .products-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .add-product-btn {
+        width: 100%;
+    }
+    
+    .product-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .product-price {
+        margin: 10px 0;
+    }
+    
+    .product-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .modal-content {
+        width: 90%;
+        padding: 20px;
     }
 }
