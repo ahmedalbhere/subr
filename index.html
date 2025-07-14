@@ -9,64 +9,100 @@
 </head>
 <body>
     <div class="container">
-        <h1>نظام كاشير السوبر ماركت</h1>
-        
-        <div class="main-section">
-            <div class="scanner-section">
-                <h2>مسح الباركود</h2>
-                <div id="scanner-container">
-                    <div id="interactive" class="viewport"></div>
+        <nav class="main-nav">
+            <button class="nav-btn active" data-page="sales">نظام الكاشير</button>
+            <button class="nav-btn" data-page="management">إدارة المبيعات</button>
+            <div class="dropdown">
+                <button class="nav-btn dropbtn">التقارير</button>
+                <div class="dropdown-content">
+                    <a href="#" data-report="daily">تقرير يومي</a>
+                    <a href="#" data-report="weekly">تقرير أسبوعي</a>
+                    <a href="#" data-report="monthly">تقرير شهري</a>
                 </div>
-                <button id="start-scanner">تشغيل الماسح</button>
-                <button id="stop-scanner">إيقاف الماسح</button>
+            </div>
+        </nav>
+        
+        <div id="sales-page" class="page active-page">
+            <h1>نظام كاشير السوبر ماركت</h1>
+            
+            <div class="main-section">
+                <div class="scanner-section">
+                    <h2>مسح الباركود</h2>
+                    <div id="scanner-container">
+                        <div id="interactive" class="viewport"></div>
+                    </div>
+                    <button id="start-scanner">تشغيل الماسح</button>
+                    <button id="stop-scanner">إيقاف الماسح</button>
+                    
+                    <div class="manual-entry">
+                        <h3>إدخال يدوي</h3>
+                        <input type="text" id="manual-barcode" placeholder="أدخل رقم الباركود">
+                        <button id="add-manual">إضافة</button>
+                    </div>
+                </div>
                 
-                <div class="manual-entry">
-                    <h3>إدخال يدوي</h3>
-                    <input type="text" id="manual-barcode" placeholder="أدخل رقم الباركود">
-                    <button id="add-manual">إضافة</button>
+                <div class="invoice-section">
+                    <h2>الفواتير</h2>
+                    <div class="invoice-header">
+                        <span>المنتج</span>
+                        <span>السعر</span>
+                        <span>الكمية</span>
+                        <span>المجموع</span>
+                        <span>حذف</span>
+                    </div>
+                    <div id="invoice-items"></div>
+                    <div class="invoice-total">
+                        <span>الإجمالي:</span>
+                        <span id="total-amount">0.00</span>
+                    </div>
+                    <button id="print-invoice">طباعة الفاتورة</button>
+                    <button id="clear-invoice">مسح الفاتورة</button>
                 </div>
             </div>
             
-            <div class="invoice-section">
-                <h2>الفواتير</h2>
-                <div class="invoice-header">
-                    <span>المنتج</span>
-                    <span>السعر</span>
-                    <span>الكمية</span>
-                    <span>المجموع</span>
-                    <span>حذف</span>
+            <div class="product-form" id="new-product-form" style="display:none;">
+                <h2>منتج جديد</h2>
+                <div class="form-group">
+                    <label for="barcode">رقم الباركود:</label>
+                    <input type="text" id="barcode" readonly>
                 </div>
-                <div id="invoice-items"></div>
-                <div class="invoice-total">
-                    <span>الإجمالي:</span>
-                    <span id="total-amount">0.00</span>
+                <div class="form-group">
+                    <label for="product-name">اسم المنتج:</label>
+                    <input type="text" id="product-name" placeholder="أدخل اسم المنتج">
                 </div>
-                <button id="print-invoice">طباعة الفاتورة</button>
-                <button id="clear-invoice">مسح الفاتورة</button>
+                <div class="form-group">
+                    <label for="product-price">السعر:</label>
+                    <input type="number" id="product-price" placeholder="أدخل السعر" step="0.01">
+                </div>
+                <button id="save-product">حفظ المنتج</button>
+            </div>
+            
+            <div class="product-management">
+                <h2>إدارة المنتجات</h2>
+                <input type="text" id="search-product" placeholder="ابحث عن منتج...">
+                <div id="product-list"></div>
             </div>
         </div>
         
-        <div class="product-form" id="new-product-form" style="display:none;">
-            <h2>منتج جديد</h2>
-            <div class="form-group">
-                <label for="barcode">رقم الباركود:</label>
-                <input type="text" id="barcode" readonly>
+        <div id="management-page" class="page">
+            <h1>إدارة المبيعات</h1>
+            <div class="sales-management">
+                <div class="sales-filters">
+                    <input type="date" id="sales-date" class="filter-input">
+                    <button id="filter-sales">تصفية</button>
+                    <button id="reset-filters">إعادة تعيين</button>
+                </div>
+                <div id="sales-list"></div>
             </div>
-            <div class="form-group">
-                <label for="product-name">اسم المنتج:</label>
-                <input type="text" id="product-name" placeholder="أدخل اسم المنتج">
-            </div>
-            <div class="form-group">
-                <label for="product-price">السعر:</label>
-                <input type="number" id="product-price" placeholder="أدخل السعر" step="0.01">
-            </div>
-            <button id="save-product">حفظ المنتج</button>
         </div>
         
-        <div class="product-management">
-            <h2>إدارة المنتجات</h2>
-            <input type="text" id="search-product" placeholder="ابحث عن منتج...">
-            <div id="product-list"></div>
+        <div id="reports-page" class="page">
+            <h1 id="report-title">التقارير</h1>
+            <div class="report-actions">
+                <button id="print-report">طباعة التقرير</button>
+                <button id="export-report">تصدير كـ Excel</button>
+            </div>
+            <div id="report-content"></div>
         </div>
     </div>
 
