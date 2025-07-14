@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام كاشير السوبر ماركت</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/quagga/dist/quagga.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -12,19 +13,24 @@
         <nav class="main-nav">
             <button class="nav-btn active" data-page="sales">المبيعات</button>
             <button class="nav-btn" data-page="products">إدارة المنتجات</button>
-            <button class="nav-btn" data-page="reports">التقارير</button>
         </nav>
 
         <!-- صفحة المبيعات الرئيسية -->
         <div id="sales-page" class="page active-page">
             <div class="sales-header">
                 <h1>نقطة البيع</h1>
-                <div class="current-time" id="current-time"></div>
+                <div class="scanner-controls">
+                    <button id="start-scanner">تشغيل الماسح الضوئي</button>
+                    <button id="stop-scanner">إيقاف الماسح</button>
+                </div>
             </div>
 
-            <div class="barcode-section">
-                <input type="text" id="barcode-input" placeholder="مسح أو إدخال الباركود" autofocus>
-                <button id="add-item">إضافة</button>
+            <div id="scanner-container">
+                <div id="interactive" class="viewport"></div>
+                <div class="scanner-overlay">
+                    <div class="scan-line"></div>
+                    <p>وجه الكاميرا نحو الباركود للمسح</p>
+                </div>
             </div>
 
             <div class="invoice-section">
@@ -61,7 +67,8 @@
                     <h2 id="product-form-title">إضافة منتج جديد</h2>
                     <div class="form-group">
                         <label for="product-barcode">باركود المنتج:</label>
-                        <input type="text" id="product-barcode">
+                        <input type="text" id="product-barcode" readonly>
+                        <button id="scan-barcode">مسح الباركود</button>
                     </div>
                     <div class="form-group">
                         <label for="product-name">اسم المنتج:</label>
@@ -76,26 +83,6 @@
                         <button id="cancel-product">إلغاء</button>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- صفحة التقارير -->
-        <div id="reports-page" class="page">
-            <h1>تقارير المبيعات</h1>
-            
-            <div class="report-filters">
-                <select id="report-type">
-                    <option value="daily">تقرير يومي</option>
-                    <option value="weekly">تقرير أسبوعي</option>
-                    <option value="monthly">تقرير شهري</option>
-                </select>
-                <input type="date" id="report-date">
-                <button id="generate-report">عرض التقرير</button>
-            </div>
-
-            <div id="report-results">
-                <div class="report-summary" id="report-summary"></div>
-                <div class="report-details" id="report-details"></div>
             </div>
         </div>
     </div>
