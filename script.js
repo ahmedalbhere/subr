@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // متغيرات التطبيق
+    // متغيرات النظام
     let products = JSON.parse(localStorage.getItem('products')) || {};
     let sales = JSON.parse(localStorage.getItem('sales')) || [];
     let currentInvoice = {
@@ -7,29 +7,27 @@ document.addEventListener('DOMContentLoaded', function() {
         total: 0
     };
     let scannerActive = false;
+    let lightActive = false;
     let currentScannedBarcode = '';
-    let isAddingNewProduct = false;
 
     // عناصر DOM
-    const navButtons = document.querySelectorAll('.nav-btn');
-    const pages = document.querySelectorAll('.page');
+    const toggleScannerBtn = document.getElementById('toggle-scanner');
+    const toggleLightBtn = document.getElementById('toggle-light');
     const scannerStatus = document.getElementById('scanner-status');
-    const startScannerBtn = document.getElementById('start-scanner');
-    const stopScannerBtn = document.getElementById('stop-scanner');
+    const lightStatus = document.getElementById('light-status');
+    const lightIndicator = document.getElementById('light-indicator');
     const scannerContainer = document.getElementById('interactive');
     const invoiceItemsContainer = document.getElementById('invoice-items');
     const totalAmountSpan = document.getElementById('total-amount');
     const completeSaleBtn = document.getElementById('complete-sale');
-    const cancelSaleBtn = document.getElementById('cancel-sale');
-    const productSearch = document.getElementById('product-search');
-    const addProductBtn = document.getElementById('add-product');
-    const productsList = document.getElementById('products-list');
-    const productForm = document.getElementById('product-form');
-    const productBarcode = document.getElementById('product-barcode');
-    const productName = document.getElementById('product-name');
-    const productPrice = document.getElementById('product-price');
+    const clearSaleBtn = document.getElementById('clear-sale');
+    const addProductModal = document.getElementById('add-product-modal');
+    const productBarcodeInput = document.getElementById('product-barcode');
+    const productNameInput = document.getElementById('product-name');
+    const productPriceInput = document.getElementById('product-price');
     const saveProductBtn = document.getElementById('save-product');
     const cancelProductBtn = document.getElementById('cancel-product');
+    const closeModalBtn = document.getElementById('close-modal');
 
     // تهيئة الماسح الضوئي
     function initScanner() {
@@ -45,27 +43,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
             },
             decoder: {
-                readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader", "code_39_vin_reader", "codabar_reader", "upc_reader", "upc_e_reader"],
-                multiple: false
+                readers: ["ean_reader", "ean_8_reader", "code_128_reader", "code_39_reader", "code_39_vin_reader", "codabar_reader", "upc_reader", "upc_e_reader"]
             },
-            locate: true,
-            debug: {
-                drawBoundingBox: true,
-                showFrequency: false,
-                drawScanline: true,
-                showPattern: false
-            }
+            locate: true
         }, function(err) {
             if (err) {
                 console.error(err);
-                alert("حدث خطأ في تهيئة الماسح الضوئي: " + err.message);
+                alert("حدث خطأ في تهيئة الماسح الضوئي");
                 return;
             }
             Quagga.start();
             scannerActive = true;
             updateScannerStatus();
-            startScannerBtn.disabled = true;
-            stopScannerBtn.disabled = false;
+            toggleScannerBtn.innerHTML = '<span class="icon">📷</span><span>إيقاف الماسح</span>';
         });
         
         Quagga.onDetected(function(result) {
@@ -80,20 +70,77 @@ document.addEventListener('DOMContentLoaded', function() {
             Quagga.stop();
             scannerActive = false;
             updateScannerStatus();
-            startScannerBtn.disabled = false;
-            stopScannerBtn.disabled = true;
+            toggleScannerBtn.innerHTML = '<span class="icon">📷</span><span>تشغيل الماسح</span>';
+        }
+    }
+
+    function toggleScanner() {
+        if (scannerActive) {
+            stopScanner();
+        } else {
+            initScanner();
         }
     }
 
     function updateScannerStatus() {
         if (scannerActive) {
-            scannerStatus.textContent = "الماسح نشط";
-            scannerStatus.classList.remove('error');
-            scannerStatus.classList.add('active');
+            scannerStatus.textContent = "الماسح: نشط";
+            scannerStatus.classList.remove('status-off');
+            scannerStatus.classList.add('status-on');
         } else {
-            scannerStatus.textContent = "الماسح متوقف";
-            scannerStatus.classList.remove('active');
-            scannerStatus.classList.add('error');
+            scannerStatus.textContent = "الماسح: متوقف";
+            scannerStatus.classList.remove('status-on');
+            scannerStatus.classList.add('status-off');
+        }
+    }
+
+    // التحكم في المصباح
+    function toggleLight() {
+        lightActive = !lightActive;
+        updateLightStatus();
+        
+        if (lightActive) {
+            toggleLightBtn.innerHTML = '<span class="icon">💡</span><span>إيقاف المصباح</span>';
+            lightIndicator.classList.add('on');
+            
+            // محاكاة تشغيل المصباح (في الواقع يحتاج لدعم الجهاز)
+            try {
+                const track = scannerContainer.querySelector('video').srcObject.getVideoTracks()[0];
+                if (track && track.getCapabilities().torch) {
+                    track.applyConstraints({
+                        advanced: [{torch: true}]
+                    });
+                }
+            } catch (e) {
+                console.log("لا يدعم الجهاز تشغيل المصباح");
+            }
+        } else {
+            toggleLightBtn.innerHTML = '<span class="icon">💡</span><span>تشغيل المصباح</span>';
+            lightIndicator.classList.remove('on');
+            
+            // محاكاة إيقاف المصباح
+            try {
+                const track = scannerContainer.querySelector('video').srcObject.getVideoTracks()[0];
+                if (track && track.getCapabilities().torch) {
+                    track.applyConstraints({
+                        advanced: [{torch: false}]
+                    });
+                }
+            } catch (e) {
+                console.log("لا يدعم الجهاز إيقاف المصباح");
+            }
+        }
+    }
+
+    function updateLightStatus() {
+        if (lightActive) {
+            lightStatus.textContent = "المصباح: مفتوح";
+            lightStatus.classList.remove('status-off');
+            lightStatus.classList.add('status-on');
+        } else {
+            lightStatus.textContent = "المصباح: مغلق";
+            lightStatus.classList.remove('status-on');
+            lightStatus.classList.add('status-off');
         }
     }
 
@@ -103,54 +150,46 @@ document.addEventListener('DOMContentLoaded', function() {
             // المنتج موجود - إضافته للفاتورة
             addItemToInvoice(products[barcode]);
         } else {
-            // المنتج غير موجود - الانتقال لإضافة المنتج
+            // المنتج غير موجود - فتح نموذج الإضافة
             stopScanner();
-            isAddingNewProduct = true;
             showAddProductForm(barcode);
-            changePage('products');
         }
     }
 
     // عرض نموذج إضافة منتج جديد
     function showAddProductForm(barcode = '') {
-        productBarcode.value = barcode;
-        productName.value = '';
-        productPrice.value = '';
-        productForm.classList.add('show');
-        
-        if (barcode) {
-            productName.focus();
-        } else {
-            productBarcode.focus();
-        }
+        productBarcodeInput.value = barcode;
+        productNameInput.value = '';
+        productPriceInput.value = '';
+        addProductModal.classList.add('show');
+        productNameInput.focus();
     }
 
     function hideAddProductForm() {
-        productForm.classList.remove('show');
-        isAddingNewProduct = false;
+        addProductModal.classList.remove('show');
     }
 
     // إضافة منتج جديد
     function addNewProduct() {
-        const barcode = productBarcode.value.trim();
-        const name = productName.value.trim();
-        const price = parseFloat(productPrice.value);
+        const barcode = productBarcodeInput.value.trim();
+        const name = productNameInput.value.trim();
+        const price = parseFloat(productPriceInput.value);
 
         if (!barcode) {
             alert('الرجاء إدخال باركود المنتج');
-            productBarcode.focus();
+            productBarcodeInput.focus();
             return;
         }
 
         if (!name) {
             alert('الرجاء إدخال اسم المنتج');
-            productName.focus();
+            productNameInput.focus();
             return;
         }
 
         if (isNaN(price) || price <= 0) {
             alert('الرجاء إدخال سعر صحيح للمنتج');
-            productPrice.focus();
+            productPriceInput.focus();
             return;
         }
 
@@ -162,38 +201,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         localStorage.setItem('products', JSON.stringify(products));
         hideAddProductForm();
-        renderProductsList();
-
-        // إذا كان الباركود من المسح الضوئي، عد لصفحة المبيعات وأضف المنتج
-        if (isAddingNewProduct && currentScannedBarcode === barcode) {
-            changePage('sales');
-            initScanner();
+        
+        // إذا كان الباركود من المسح الضوئي، أضف المنتج للفاتورة
+        if (currentScannedBarcode === barcode) {
             addItemToInvoice(products[barcode]);
-        }
-    }
-
-    // تغيير الصفحات
-    function changePage(pageId) {
-        pages.forEach(page => {
-            page.classList.remove('active-page');
-            if (page.id === `${pageId}-page`) {
-                page.classList.add('active-page');
-            }
-        });
-
-        navButtons.forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.getAttribute('data-page') === pageId) {
-                btn.classList.add('active');
-            }
-        });
-
-        if (pageId === 'sales') {
-            if (!scannerActive && !isAddingNewProduct) {
-                initScanner();
-            }
-        } else {
-            stopScanner();
+            initScanner(); // إعادة تشغيل الماسح
         }
     }
 
@@ -220,19 +232,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateInvoiceTotal() {
         currentInvoice.total = currentInvoice.items.reduce((sum, item) => sum + item.total, 0);
-        totalAmountSpan.textContent = currentInvoice.total.toFixed(2);
+        totalAmountSpan.textContent = currentInvoice.total.toFixed(2) + ' ر.س';
     }
 
     function renderInvoiceItems() {
         invoiceItemsContainer.innerHTML = '';
 
         if (currentInvoice.items.length === 0) {
-            invoiceItemsContainer.innerHTML = `
-                <div class="empty-invoice">
-                    <p>لا توجد عناصر في الفاتورة</p>
-                    <p>قم بمسح الباركود لإضافة منتجات</p>
-                </div>
-            `;
+            invoiceItemsContainer.innerHTML = '<div class="empty-message">لا توجد عناصر في الفاتورة</div>';
             return;
         }
 
@@ -240,10 +247,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const itemElement = document.createElement('div');
             itemElement.className = 'invoice-item';
             itemElement.innerHTML = `
-                <span class="item-name">${item.name}</span>
-                <span class="item-price">${item.price.toFixed(2)}</span>
-                <span class="item-qty">${item.quantity}</span>
-                <span class="item-total">${item.total.toFixed(2)}</span>
+                <span class="col-product">${item.name}</span>
+                <span class="col-price">${item.price.toFixed(2)} ر.س</span>
+                <span class="col-qty">${item.quantity}</span>
+                <span class="col-total">${item.total.toFixed(2)} ر.س</span>
             `;
             invoiceItemsContainer.appendChild(itemElement);
         });
@@ -273,11 +280,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         updateInvoiceTotal();
         renderInvoiceItems();
-        alert('تم حفظ الفاتورة بنجاح! رقم الفاتورة: #' + sale.id);
+        alert(`تم حفظ الفاتورة بنجاح! رقم الفاتورة: ${sale.id}`);
     }
 
-    function cancelSale() {
-        if (confirm('هل أنت متأكد من إلغاء الفاتورة الحالية؟ سيتم حذف جميع العناصر.')) {
+    function clearSale() {
+        if (confirm('هل أنت متأكد من مسح الفاتورة الحالية؟')) {
             currentInvoice = {
                 items: [],
                 total: 0
@@ -288,104 +295,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // إدارة المنتجات
-    function renderProductsList(filter = '') {
-        productsList.innerHTML = '';
-
-        const filteredProducts = Object.values(products).filter(product => 
-            product.name.toLowerCase().includes(filter.toLowerCase()) || 
-            product.barcode.includes(filter)
-        );
-
-        if (filteredProducts.length === 0) {
-            productsList.innerHTML = `
-                <div class="empty-products">
-                    <p>لا توجد منتجات مسجلة</p>
-                    <button id="add-first-product" class="add-product-btn">إضافة منتج جديد</button>
-                </div>
-            `;
-            
-            document.getElementById('add-first-product')?.addEventListener('click', () => {
-                showAddProductForm();
-            });
-            
-            return;
-        }
-
-        filteredProducts.forEach(product => {
-            const productElement = document.createElement('div');
-            productElement.className = 'product-item';
-            productElement.innerHTML = `
-                <div class="product-info">
-                    <div class="product-name">${product.name}</div>
-                    <div class="product-barcode">${product.barcode}</div>
-                </div>
-                <div class="product-price">${product.price.toFixed(2)}</div>
-                <div class="product-actions">
-                    <button class="edit-btn" data-barcode="${product.barcode}">تعديل</button>
-                    <button class="delete-btn" data-barcode="${product.barcode}">حذف</button>
-                </div>
-            `;
-            productsList.appendChild(productElement);
-        });
-
-        // إضافة معالجات الأحداث لأزرار التعديل والحذف
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const barcode = this.getAttribute('data-barcode');
-                editProduct(barcode);
-            });
-        });
-
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const barcode = this.getAttribute('data-barcode');
-                deleteProduct(barcode);
-            });
-        });
-    }
-
-    function editProduct(barcode) {
-        const product = products[barcode];
-        if (product) {
-            productBarcode.value = product.barcode;
-            productName.value = product.name;
-            productPrice.value = product.price;
-            showAddProductForm();
-        }
-    }
-
-    function deleteProduct(barcode) {
-        if (confirm('هل أنت متأكد من حذف هذا المنتج؟ لا يمكن التراجع عن هذه العملية.')) {
-            delete products[barcode];
-            localStorage.setItem('products', JSON.stringify(products));
-            renderProductsList(productSearch.value);
-        }
-    }
-
     // معالجات الأحداث
-    navButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const pageId = this.getAttribute('data-page');
-            changePage(pageId);
-        });
-    });
-
-    startScannerBtn.addEventListener('click', initScanner);
-    stopScannerBtn.addEventListener('click', stopScanner);
+    toggleScannerBtn.addEventListener('click', toggleScanner);
+    toggleLightBtn.addEventListener('click', toggleLight);
     completeSaleBtn.addEventListener('click', completeSale);
-    cancelSaleBtn.addEventListener('click', cancelSale);
-    productSearch.addEventListener('input', function() {
-        renderProductsList(this.value);
-    });
-    addProductBtn.addEventListener('click', function() {
-        showAddProductForm();
-    });
+    clearSaleBtn.addEventListener('click', clearSale);
     saveProductBtn.addEventListener('click', addNewProduct);
     cancelProductBtn.addEventListener('click', hideAddProductForm);
+    closeModalBtn.addEventListener('click', hideAddProductForm);
+
+    // إغلاق النافذة عند النقر خارجها
+    addProductModal.addEventListener('click', function(e) {
+        if (e.target === addProductModal) {
+            hideAddProductForm();
+        }
+    });
 
     // تهيئة التطبيق
-    changePage('sales');
-    renderProductsList();
+    updateScannerStatus();
+    updateLightStatus();
     renderInvoiceItems();
 });
