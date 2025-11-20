@@ -1,99 +1,343 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام كاشير السوبر ماركت</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/quagga/dist/quagga.min.js"></script>
-</head>
-<body>
-    <div class="container">
-        <!-- شريط التحكم العلوي -->
-        <div class="control-bar">
-            <div class="scanner-controls">
-                <button id="toggle-scanner" class="control-btn">
-                    <span class="icon">📷</span>
-                    <span>تشغيل الماسح</span>
-                </button>
-                <button id="toggle-light" class="control-btn">
-                    <span class="icon">💡</span>
-                    <span>تشغيل المصباح</span>
-                </button>
-            </div>
-            <div class="system-status">
-                <span id="scanner-status" class="status-off">الماسح: متوقف</span>
-                <span id="light-status" class="status-off">المصباح: مغلق</span>
-            </div>
+import React, { useState } from 'react';
+
+// Financial Analyzer - Single file React component
+// TailwindCSS classes used for styling (assumes Tailwind is available)
+
+export default function FinancialAnalyzer() {
+  // Income statement lines (flexible)
+  const [incLines, setIncLines] = useState([
+    { id: 1, name: 'صافي المبيعات', y1: 100000, y2: 120000 },
+    { id: 2, name: 'تكلفة البضاعة المباعة', y1: 60000, y2: 72000 },
+    { id: 3, name: 'مصروفات تشغيلية', y1: 15000, y2: 16000 },
+    { id: 4, name: 'صافي الربح', y1: 25000, y2: 32000 }
+  ]);
+
+  // Balance sheet lines (flexible)
+  const [balLines, setBalLines] = useState([
+    { id: 1, name: 'الأصول المتداولة', y1: 40000, y2: 45000 },
+    { id: 2, name: 'المخزون', y1: 15000, y2: 17000 },
+    { id: 3, name: 'الذمم المدينة', y1: 12000, y2: 14000 },
+    { id: 4, name: 'الأصول الثابتة', y1: 80000, y2: 90000 },
+    { id: 5, name: 'الخصوم المتداولة', y1: 20000, y2: 23000 },
+    { id: 6, name: 'إجمالي الخصوم', y1: 50000, y2: 56000 },
+    { id: 7, name: 'حقوق الملكية', y1: 70000, y2: 74000 }
+  ]);
+
+  // Dedicated inputs for ratio calculations (fallback values can be taken from lines)
+  const [netSales, setNetSales] = useState(incLines.find(l=>l.name==='صافي المبيعات')?.y2 || 120000);
+  const [cogs, setCogs] = useState(incLines.find(l=>l.name==='تكلفة البضاعة المباعة')?.y2 || 72000);
+  const [inventoryY2, setInventoryY2] = useState(balLines.find(l=>l.name==='المخزون')?.y2 || 17000);
+  const [receivablesY2, setReceivablesY2] = useState(balLines.find(l=>l.name==='الذمم المدينة')?.y2 || 14000);
+  const [currentAssetsY2, setCurrentAssetsY2] = useState(balLines.find(l=>l.name==='الأصول المتداولة')?.y2 || 45000);
+  const [currentLiabY2, setCurrentLiabY2] = useState(balLines.find(l=>l.name==='الخصوم المتداولة')?.y2 || 23000);
+  const [totalAssetsY2, setTotalAssetsY2] = useState(balLines.reduce((s,l)=>s+l.y2,0));
+  const [totalLiabY2, setTotalLiabY2] = useState(balLines.find(l=>l.name==='إجمالي الخصوم')?.y2 || 56000);
+  const [equityY2, setEquityY2] = useState(balLines.find(l=>l.name==='حقوق الملكية')?.y2 || 74000);
+
+  // Helpers
+  const fmt = (n) => {
+    if (n === null || n === undefined || isNaN(n)) return '-';
+    return Number(n).toLocaleString();
+  };
+
+  const percent = (num, den) => {
+    if (!den || den === 0) return '-';
+    return ((num/den)*100).toFixed(2) + '%';
+  };
+
+  // Add / remove lines
+  function addIncLine(){
+    const id = Date.now();
+    setIncLines([...incLines, {id, name: 'بند جديد', y1:0, y2:0}]);
+  }
+  function addBalLine(){
+    const id = Date.now();
+    setBalLines([...balLines, {id, name: 'بند جديد', y1:0, y2:0}]);
+  }
+
+  function updateInc(id, field, value){
+    setIncLines(incLines.map(l=> l.id===id? {...l, [field]: Number(value)}: l));
+  }
+  function updateBal(id, field, value){
+    setBalLines(balLines.map(l=> l.id===id? {...l, [field]: Number(value)}: l));
+  }
+
+  function removeInc(id){ setIncLines(incLines.filter(l=>l.id!==id)); }
+  function removeBal(id){ setBalLines(balLines.filter(l=>l.id!==id)); }
+
+  // Calculations
+  const incTotals = { y1: incLines.reduce((s,l)=>s+l.y1,0), y2: incLines.reduce((s,l)=>s+l.y2,0) };
+  const balTotals = { y1: balLines.reduce((s,l)=>s+l.y1,0), y2: balLines.reduce((s,l)=>s+l.y2,0) };
+
+  // Horizontal analysis: change and %
+  function horiz(lines){
+    return lines.map(l=>({
+      ...l,
+      change: l.y2 - l.y1,
+      changePct: l.y1 === 0 ? '-' : ((l.y2 - l.y1)/Math.abs(l.y1)*100).toFixed(2) + '%'
+    }));
+  }
+
+  // Vertical analysis: each line as % of base (income -> net sales, balance -> total assets)
+  const incomeBaseY1 = incLines.find(l=>l.name==='صافي المبيعات')?.y1 || incTotals.y1 || 1;
+  const incomeBaseY2 = incLines.find(l=>l.name==='صافي المبيعات')?.y2 || incTotals.y2 || 1;
+  const balanceBaseY1 = balTotals.y1 || 1;
+  const balanceBaseY2 = balTotals.y2 || 1;
+
+  const incomeVertical = incLines.map(l=>({
+    ...l,
+    pctY1: incomeBaseY1 ? (l.y1/incomeBaseY1*100).toFixed(2) + '%' : '-',
+    pctY2: incomeBaseY2 ? (l.y2/incomeBaseY2*100).toFixed(2) + '%' : '-'
+  }));
+  const balanceVertical = balLines.map(l=>({
+    ...l,
+    pctY1: balanceBaseY1 ? (l.y1/balanceBaseY1*100).toFixed(2) + '%' : '-',
+    pctY2: balanceBaseY2 ? (l.y2/balanceBaseY2*100).toFixed(2) + '%' : '-'
+  }));
+
+  // Cash flow: simple Source / Use table from balance changes
+  // Rule: Increase in assets = Use, Decrease in assets = Source
+  // Increase in liabilities/equity = Source, Decrease = Use
+  const cashChanges = balLines.map(l=>({
+    name: l.name,
+    delta: l.y2 - l.y1,
+    type: (()=>{
+      // naive classification: if name contains 'أصول' or known asset terms -> asset
+      const assetKeywords = ['أصول','مخزون','الذمم','المخزون','الأصول','ثابتة','متداولة'];
+      const liabKeywords = ['خصوم','دائن','قرض','التزامات','المطلوبات','حقوق'];
+      const n = l.name;
+      if (assetKeywords.some(k=>n.includes(k))) return 'asset';
+      if (liabKeywords.some(k=>n.includes(k))) return 'liability_or_equity';
+      // fallback: decide by sign relative to totals: if contributes positively to total assets list position
+      return 'asset';
+    })()
+  }));
+
+  const sources = [];
+  const uses = [];
+  cashChanges.forEach(c=>{
+    if (c.type === 'asset'){
+      if (c.delta > 0) uses.push({name: c.name, amount: c.delta});
+      else if (c.delta < 0) sources.push({name: c.name, amount: -c.delta});
+    } else {
+      // liability or equity
+      if (c.delta > 0) sources.push({name: c.name, amount: c.delta});
+      else if (c.delta < 0) uses.push({name: c.name, amount: -c.delta});
+    }
+  });
+
+  const totalSources = sources.reduce((s,i)=>s+i.amount,0);
+  const totalUses = uses.reduce((s,i)=>s+i.amount,0);
+
+  // Ratios (using Y2 values)
+  const ratios = {
+    currentRatio: currentLiabY2 ? (currentAssetsY2/currentLiabY2).toFixed(2) : '-',
+    quickRatio: currentLiabY2 ? ((currentAssetsY2 - inventoryY2)/currentLiabY2).toFixed(2) : '-',
+    inventoryTurnover: cogs ? (cogs / ((inventoryY2 + (balLines.find(l=>l.name==='المخزون')?.y1||0))/2)).toFixed(2) : '-',
+    receivablesTurnover: netSales ? (netSales / ((receivablesY2 + (balLines.find(l=>l.name==='الذمم المدينة')?.y1||0))/2)).toFixed(2) : '-',
+    totalAssetTurnover: totalAssetsY2 ? (netSales / totalAssetsY2).toFixed(2) : '-',
+    debtToEquity: equityY2 ? (totalLiabY2 / equityY2).toFixed(2) : '-',
+    debtRatio: totalAssetsY2 ? (totalLiabY2 / totalAssetsY2).toFixed(2) : '-'
+  };
+
+  // Export CSV helper (simple)
+  function exportCSV(){
+    const rows = [];
+    rows.push(['بند','سنة 1','سنة 2','التغير','% التغير']);
+    horiz(incLines).forEach(r=> rows.push([r.name, r.y1, r.y2, r.change, r.changePct]));
+    rows.push([]);
+    rows.push(['ميزانية']);
+    horiz(balLines).forEach(r=> rows.push([r.name, r.y1, r.y2, r.change, r.changePct]));
+
+    const csvContent = rows.map(r => r.map(c=> '"'+(c===undefined? '': String(c))+'"').join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'financial_analysis.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div className="p-6 max-w-6xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">موقع التحليل المالي — قارن سنتين</h1>
+      <p className="mb-4 text-sm text-gray-600">أدخل بنود قائمة الدخل والميزانية لكل سنة (يمكنك إضافة بنود جديدة). النتائج: التحليل الرأسي، الأفقي، جدول مصدر/استخدام النقد، والنسب المالية.</p>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="bg-white p-4 rounded shadow">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="font-semibold">قائمة الدخل</h2>
+            <button onClick={addIncLine} className="text-sm px-3 py-1 rounded border">إضافة بند</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left"><th>البند</th><th>سنة 1</th><th>سنة 2</th><th></th></tr>
+              </thead>
+              <tbody>
+                {incLines.map(l=> (
+                  <tr key={l.id} className="align-top border-t">
+                    <td className="py-2"><input className="w-full" value={l.name} onChange={e=> updateInc(l.id,'name', e.target.value)} /></td>
+                    <td><input type="number" className="w-full" value={l.y1} onChange={e=> updateInc(l.id,'y1', e.target.value)} /></td>
+                    <td><input type="number" className="w-full" value={l.y2} onChange={e=> { updateInc(l.id,'y2', e.target.value); setNetSales(incLines.find(item=>item.id===l.id && item.name==='صافي المبيعات')?.y2 || netSales); }} /></td>
+                    <td className="text-right"><button className="text-sm text-red-600" onClick={()=> removeInc(l.id)}>حذف</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <!-- منطقة الماسح الضوئي -->
-        <div id="scanner-area">
-            <div id="scanner-container">
-                <div id="interactive" class="viewport"></div>
-                <div class="scanner-overlay">
-                    <div class="scan-line"></div>
-                    <p class="scan-instruction">وجه الكاميرا نحو الباركود للمسح</p>
-                </div>
+        <div className="bg-white p-4 rounded shadow">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="font-semibold">الميزانية</h2>
+            <button onClick={addBalLine} className="text-sm px-3 py-1 rounded border">إضافة بند</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left"><th>البند</th><th>سنة 1</th><th>سنة 2</th><th></th></tr>
+              </thead>
+              <tbody>
+                {balLines.map(l=> (
+                  <tr key={l.id} className="align-top border-t">
+                    <td className="py-2"><input className="w-full" value={l.name} onChange={e=> updateBal(l.id,'name', e.target.value)} /></td>
+                    <td><input type="number" className="w-full" value={l.y1} onChange={e=> updateBal(l.id,'y1', e.target.value)} /></td>
+                    <td><input type="number" className="w-full" value={l.y2} onChange={e=> { updateBal(l.id,'y2', e.target.value); setTotalAssetsY2(balLines.reduce((s,ln)=>s+ln.y2,0)); }} /></td>
+                    <td className="text-right"><button className="text-sm text-red-600" onClick={()=> removeBal(l.id)}>حذف</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Analysis results */}
+      <div className="mt-6 grid lg:grid-cols-2 gap-6">
+        <div className="bg-white p-4 rounded shadow">
+          <h3 className="font-semibold mb-3">التحليل الأفقي (التغير)</h3>
+          <div className="overflow-x-auto text-sm">
+            <table className="w-full">
+              <thead><tr className="text-left"><th>البند</th><th>سنة1</th><th>سنة2</th><th>التغير</th><th>% التغير</th></tr></thead>
+              <tbody>
+                {horiz(incLines).map(r=> (
+                  <tr key={r.id} className="border-t"><td>{r.name}</td><td>{fmt(r.y1)}</td><td>{fmt(r.y2)}</td><td>{fmt(r.change)}</td><td>{r.changePct}</td></tr>
+                ))}
+                <tr className="border-t font-semibold"><td>مجموع دخل</td><td>{fmt(incTotals.y1)}</td><td>{fmt(incTotals.y2)}</td><td>{fmt(incTotals.y2-incTotals.y1)}</td><td>{incTotals.y1? ((incTotals.y2-incTotals.y1)/Math.abs(incTotals.y1)*100).toFixed(2)+'%':'-'}</td></tr>
+              </tbody>
+            </table>
+
+            <div className="mt-4">
+              <h4 className="font-semibold">ميزانية - التحليل الأفقي</h4>
+              <table className="w-full text-sm mt-2">
+                <thead><tr className="text-left"><th>البند</th><th>سنة1</th><th>سنة2</th><th>التغير</th><th>% التغير</th></tr></thead>
+                <tbody>
+                  {horiz(balLines).map(r=> (
+                    <tr key={r.id} className="border-t"><td>{r.name}</td><td>{fmt(r.y1)}</td><td>{fmt(r.y2)}</td><td>{fmt(r.change)}</td><td>{r.changePct}</td></tr>
+                  ))}
+                  <tr className="border-t font-semibold"><td>إجمالي</td><td>{fmt(balTotals.y1)}</td><td>{fmt(balTotals.y2)}</td><td>{fmt(balTotals.y2-balTotals.y1)}</td><td>{balTotals.y1? ((balTotals.y2-balTotals.y1)/Math.abs(balTotals.y1)*100).toFixed(2)+'%':'-'}</td></tr>
+                </tbody>
+              </table>
             </div>
-            <div class="light-indicator" id="light-indicator"></div>
+          </div>
         </div>
 
-        <!-- صفحة المبيعات -->
-        <div id="sales-page" class="page active-page">
-            <div class="invoice-section">
-                <h2>فاتورة البيع الحالية</h2>
-                <div class="invoice-header">
-                    <span class="col-product">المنتج</span>
-                    <span class="col-price">السعر</span>
-                    <span class="col-qty">الكمية</span>
-                    <span class="col-total">المجموع</span>
+        <div className="bg-white p-4 rounded shadow">
+          <h3 className="font-semibold mb-3">التحليل الرأسي (المئوي)</h3>
+          <div className="overflow-x-auto text-sm">
+            <h4 className="font-medium mt-2">قائمة الدخل كنسبة من صافي المبيعات</h4>
+            <table className="w-full mt-2">
+              <thead><tr className="text-left"><th>البند</th><th>% سنة1</th><th>% سنة2</th></tr></thead>
+              <tbody>
+                {incomeVertical.map(r=> (
+                  <tr key={r.id} className="border-t"><td>{r.name}</td><td>{r.pctY1}</td><td>{r.pctY2}</td></tr>
+                ))}
+              </tbody>
+            </table>
+
+            <h4 className="font-medium mt-4">الميزانية كنسبة من إجمالي الأصول</h4>
+            <table className="w-full mt-2 text-sm">
+              <thead><tr className="text-left"><th>البند</th><th>% سنة1</th><th>% سنة2</th></tr></thead>
+              <tbody>
+                {balanceVertical.map(r=> (
+                  <tr key={r.id} className="border-t"><td>{r.name}</td><td>{r.pctY1}</td><td>{r.pctY2}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4">
+            <h4 className="font-semibold">جدول مصدر / استخدام النقد (مشتق من تغيرات الميزانية)</h4>
+            <div className="text-sm mt-2">
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <h5 className="font-medium">المصادر</h5>
+                  <ul className="list-disc pl-5">
+                    {sources.length? sources.map((s,i)=>(<li key={i}>{s.name}: {fmt(s.amount)}</li>)) : <li>-</li>}
+                  </ul>
+                  <div className="mt-2 font-semibold">الإجمالي: {fmt(totalSources)}</div>
                 </div>
-                <div id="invoice-items" class="invoice-items">
-                    <div class="empty-message">لا توجد عناصر في الفاتورة</div>
+                <div className="flex-1">
+                  <h5 className="font-medium">الاستخدامات</h5>
+                  <ul className="list-disc pl-5">
+                    {uses.length? uses.map((s,i)=>(<li key={i}>{s.name}: {fmt(s.amount)}</li>)) : <li>-</li>}
+                  </ul>
+                  <div className="mt-2 font-semibold">الإجمالي: {fmt(totalUses)}</div>
                 </div>
-                <div class="invoice-footer">
-                    <div class="total-amount">
-                        <span>المجموع الكلي:</span>
-                        <span id="total-amount">0.00 ر.س</span>
-                    </div>
-                    <div class="invoice-actions">
-                        <button id="complete-sale" class="btn-primary">إتمام البيع</button>
-                        <button id="clear-sale" class="btn-secondary">مسح الفاتورة</button>
-                    </div>
-                </div>
+              </div>
             </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div className="mt-6 bg-white p-4 rounded shadow">
+        <h3 className="font-semibold mb-3">النسب المالية (سنة 2)</h3>
+        <div className="grid md:grid-cols-3 gap-4 text-sm">
+          <div>
+            <h4 className="font-medium">السيولة</h4>
+            <div>النسبة الحالية: {ratios.currentRatio}</div>
+            <div>النسبة السريعة: {ratios.quickRatio}</div>
+          </div>
+
+          <div>
+            <h4 className="font-medium">النشاط</h4>
+            <div>دوران المخزون: {ratios.inventoryTurnover}</div>
+            <div>دوران الذمم: {ratios.receivablesTurnover}</div>
+            <div>دوران إجمالي الأصول: {ratios.totalAssetTurnover}</div>
+          </div>
+
+          <div>
+            <h4 className="font-medium">هيكل التمويل</h4>
+            <div>نسبة الدين إلى حقوق الملكية: {ratios.debtToEquity}</div>
+            <div>نسبة الدين إلى إجمالي الأصول: {ratios.debtRatio}</div>
+          </div>
         </div>
 
-        <!-- نافذة إضافة منتج جديد -->
-        <div id="add-product-modal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>إضافة منتج جديد</h3>
-                    <button id="close-modal" class="close-btn">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="product-barcode">باركود المنتج:</label>
-                        <input type="text" id="product-barcode" class="form-input" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="product-name">اسم المنتج:</label>
-                        <input type="text" id="product-name" class="form-input" placeholder="أدخل اسم المنتج">
-                    </div>
-                    <div class="form-group">
-                        <label for="product-price">سعر المنتج:</label>
-                        <input type="number" id="product-price" class="form-input" placeholder="أدخل السعر" step="0.01" min="0">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="save-product" class="btn-primary">حفظ المنتج</button>
-                    <button id="cancel-product" class="btn-secondary">إلغاء</button>
-                </div>
-            </div>
+        <div className="mt-4 text-sm">
+          <p className="font-medium">مداخل إضافية (اختياري):</p>
+          <div className="grid md:grid-cols-4 gap-2 mt-2">
+            <input type="number" value={netSales} onChange={e=>setNetSales(Number(e.target.value))} className="p-2 border rounded" placeholder="صافي المبيعات (سنة2)" />
+            <input type="number" value={cogs} onChange={e=>setCogs(Number(e.target.value))} className="p-2 border rounded" placeholder="تكلفة البضاعة المباشرة (سنة2)" />
+            <input type="number" value={inventoryY2} onChange={e=>setInventoryY2(Number(e.target.value))} className="p-2 border rounded" placeholder="المخزون (سنة2)" />
+            <input type="number" value={receivablesY2} onChange={e=>setReceivablesY2(Number(e.target.value))} className="p-2 border rounded" placeholder="الذمم (سنة2)" />
+            <input type="number" value={currentAssetsY2} onChange={e=>setCurrentAssetsY2(Number(e.target.value))} className="p-2 border rounded" placeholder="الأصول المتداولة (سنة2)" />
+            <input type="number" value={currentLiabY2} onChange={e=>setCurrentLiabY2(Number(e.target.value))} className="p-2 border rounded" placeholder="الخصوم المتداولة (سنة2)" />
+            <input type="number" value={totalAssetsY2} onChange={e=>setTotalAssetsY2(Number(e.target.value))} className="p-2 border rounded" placeholder="إجمالي الأصول (سنة2)" />
+            <input type="number" value={totalLiabY2} onChange={e=>setTotalLiabY2(Number(e.target.value))} className="p-2 border rounded" placeholder="إجمالي الخصوم (سنة2)" />
+            <input type="number" value={equityY2} onChange={e=>setEquityY2(Number(e.target.value))} className="p-2 border rounded" placeholder="حقوق الملكية (سنة2)" />
+          </div>
         </div>
+
+        <div className="mt-4 flex gap-3">
+          <button onClick={exportCSV} className="px-4 py-2 rounded border">تصدير CSV</button>
+          <button onClick={()=>{ navigator.clipboard.writeText(JSON.stringify({incLines, balLines},null,2)); alert('نسخ البيانات كـ JSON إلى الحافظة'); }} className="px-4 py-2 rounded border">نسخ JSON</button>
+        </div>
+      </div>
+
+      <p className="text-xs text-gray-500 mt-4">ملاحظة: هذا التطبيق يقوم بحسابات تقريبية — تأكد من تدقيق النتائج يدوياً قبل اتخاذ قرارات مالية.</p>
     </div>
-
-    <script src="script.js"></script>
-</body>
-</html>
+  );
+}
